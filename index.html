@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KeyFlow — Typing Speed Test &amp; Practice</title>
+<meta name="description" content="KeyFlow is a professional typing speed test and practice trainer. Measure WPM, accuracy and consistency, and train with targeted keyboard lessons.">
+<meta name="theme-color" content="#0e1217">
+<meta property="og:type" content="website">
+<meta property="og:title" content="KeyFlow — Typing Speed Test &amp; Practice">
+<meta property="og:description" content="Measure your typing speed (WPM), accuracy and consistency. Practice with structured lessons, custom texts and live WPM charts. Free and private — everything in your browser.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌨️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=8">
+<script>
+/* Apply saved theme/text-size before first paint to avoid flashing */
+try{
+  var _kf = JSON.parse(localStorage.getItem('keyflow.settings.v1') || '{}');
+  if (_kf.theme === 'light') { document.documentElement.dataset.theme = 'light'; }
+  if (_kf.fontSize) { document.documentElement.style.setProperty('--fs', _kf.fontSize + 'px'); }
+}catch(e){}
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <button class="logo" data-view="view-test" title="KeyFlow — home">
+      <span class="logo-icon">⌨️</span> key<span class="logo-flow">flow</span><span class="logo-ver">v1.4</span>
+    </button>
+    <nav class="main-nav" aria-label="Sections">
+      <button class="nav-btn active" data-view="view-test"><span class="nav-ic">⌨</span><span>Test</span></button>
+      <button class="nav-btn" data-view="view-practice"><span class="nav-ic">◎</span><span>Practice</span></button>
+      <button class="nav-btn" data-view="view-history"><span class="nav-ic">▦</span><span>History</span></button>
+    </nav>
+    <button class="icon-btn" id="btnTheme" title="Light / dark theme" aria-label="Toggle light and dark theme"><span id="themeIcon">☾</span></button>
+    <button class="icon-btn" id="btnHelp" title="Help & shortcuts" aria-label="Help">?</button>
+    <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+
+  <!-- ======================= TEST ======================= -->
+  <section class="view active" id="view-test">
+    <div class="config-bar" id="configBar">
+      <div class="cfg-group" id="cfgModes">
+        <button class="chip" data-mode="time">⏱ time</button>
+        <button class="chip" data-mode="words">¶ words</button>
+        <button class="chip" data-mode="quote">❝ quote</button>
+        <button class="chip" data-mode="custom">✎ custom</button>
+      </div>
+      <span class="dotsep">·</span>
+      <div class="cfg-group" id="cfgSub"></div>
+      <span class="dotsep" id="sepSub">·</span>
+      <div class="cfg-group" id="cfgLevel">
+        <button class="chip" data-level="beginner" title="Very common, short words">beginner</button>
+        <button class="chip" data-level="easy" title="Common everyday words">easy</button>
+        <button class="chip" data-level="medium" title="Everyday but longer words">medium</button>
+        <button class="chip" data-level="hard" title="Advanced vocabulary">hard</button>
+        <button class="chip" data-level="expert" title="Rare, long, technical vocabulary">expert</button>
+      </div>
+      <span class="dotsep" id="sepLevel">·</span>
+      <div class="cfg-group" id="cfgToggles">
+        <button class="chip" id="chipPunct" title="Add punctuation symbols">@ punctuation</button>
+        <button class="chip" id="chipNums" title="Add random numbers"># numbers</button>
+        <button class="chip" id="chipKb" title="Show the on-screen keyboard">⌨ keyboard</button>
+      </div>
+      <span class="dotsep">·</span>
+      <button class="chip accent" id="btnNewTest" title="Shortcut: Tab">↻ new test</button>
+    </div>
+
+    <div class="progress-meter" id="progressMeter"><i></i></div>
+
+    <div class="stats-strip idle" id="statStrip">
+      <div class="stat"><div class="label" id="statTimerLabel">Time</div><div class="value mono" id="statTimer">60</div></div>
+      <div class="stat"><div class="label">WPM</div><div class="value mono" id="statWpm">0</div></div>
+      <div class="stat"><div class="label">ACC</div><div class="value mono" id="statAcc">100</div></div>
+    </div>
+
+    <div class="typing-wrap" id="testTyping">
+      <div class="words" id="words"></div>
+      <div class="focus-overlay" id="focusOverlay">
+        <div class="fo-inner">
+          <div class="fo-key">⌨</div>
+          <div class="fo-line">press any key to start</div>
+          <div class="fo-sub"><kbd>Tab</kbd> new test &nbsp;·&nbsp; <kbd>Esc</kbd> restart &nbsp;·&nbsp; <kbd>↵</kbd> next (after test)</div>
+        </div>
+      </div>
+    </div>
+    <div class="quote-by" id="quoteBy" hidden></div>
+
+    <div class="suggest-bar" id="suggestBar" title="The next words you will type">
+      <span class="sg-lbl">next</span>
+      <span class="sg-words" id="suggestWords"></span>
+    </div>
+
+    <div class="chart-holder" id="liveChartHolder"><canvas id="liveCanvas"></canvas></div>
+
+    <div class="kb hidden" id="testKb"></div>
+
+    <div class="bottom-hint"><kbd>Tab</kbd> new test &nbsp; <kbd>Esc</kbd> restart same words &nbsp; <kbd>↵</kbd> next test &nbsp;·&nbsp; best experienced on a desktop keyboard</div>
+  </section>
+
+  <!-- ======================= RESULTS ======================= -->
+  <section class="view" id="view-results">
+    <div class="res-head">
+      <h2 id="resTitle">Test complete</h2>
+      <div class="res-sub" id="resMeta"></div>
+    </div>
+    <div class="res-body">
+      <div class="res-stats">
+        <div class="big-stat" id="wpmCard">
+          <div class="grade-badge hidden" id="resBadge">A</div>
+          <div class="label">WPM</div><div class="value mono grad" id="resWpm">—</div>
+        </div>
+        <div class="big-stat"><div class="label">ACCURACY</div><div class="value mono" id="resAcc">—</div></div>
+        <div class="row3">
+          <div class="mini-stat"><div class="label">RAW</div><div class="value mono" id="resRaw">—</div></div>
+          <div class="mini-stat"><div class="label">CONSISTENCY</div><div class="value mono" id="resCons">—</div></div>
+          <div class="mini-stat"><div class="label">TIME</div><div class="value mono" id="resTime">—</div></div>
+        </div>
+        <div class="char-line" id="resChars"></div>
+        <div class="weak-keys hidden" id="resWeak">
+          <div class="weak-line" id="resWeakLine"></div>
+          <button class="btn small" id="btnWeakDrill">Practice weak keys →</button>
+        </div>
+        <div class="char-line compare" id="resCompare"></div>
+        <div class="pb-note" id="pbNote"></div>
+      </div>
+      <div class="res-chart card">
+        <canvas id="resCanvas"></canvas>
+        <div class="chart-legend">
+          <span class="lg net">wpm</span><span class="lg raw">raw</span><span class="lg err">errors</span><span class="lg ref">avg / best</span>
+        </div>
+      </div>
+    </div>
+    <div class="test-actions">
+      <button class="btn primary" id="btnNextTest">Next test <span class="kbd-inline">↵</span></button>
+      <button class="btn" id="btnShare">⇪ Share result</button>
+      <button class="btn" id="btnRepeat">Repeat <span class="kbd-inline">Esc</span></button>
+      <button class="btn ghost" id="btnGoTest">Review wordstream</button>
+    </div>
+    <div class="share-strip"><span class="sep">tip — share your results and challenge a friend to beat them</span></div>
+  </section>
+
+  <!-- ======================= PRACTICE ======================= -->
+  <section class="view" id="view-practice">
+    <div class="practice-layout">
+      <aside class="lessons" id="lessonList"></aside>
+      <div class="practice-pane" id="practicePane">
+        <div class="p-head">
+          <div>
+            <div class="p-title" id="pTitle">Lesson</div>
+            <div class="p-sub" id="pSub"></div>
+            <div class="p-desc" id="pDesc"></div>
+          </div>
+          <button class="btn ghost small" id="btnLessonExit">← all lessons</button>
+        </div>
+        <div class="stats-strip small" id="pStrip">
+          <div class="stat"><div class="label">WPM</div><div class="value mono" id="pStatWpm">0</div></div>
+          <div class="stat"><div class="label">ACC</div><div class="value mono" id="pStatAcc">100</div></div>
+          <div class="stat"><div class="label">LEFT</div><div class="value mono" id="pStatLeft">25</div></div>
+          <div class="stat target"><div class="label">TARGET</div><div class="value mono" id="pStatTarget">—</div></div>
+        </div>
+        <div class="typing-wrap">
+          <div class="words" id="pWords"></div>
+        </div>
+        <div class="p-result card hidden" id="pResult">
+          <div class="pr-head">
+            <span class="pr-verdict" id="prVerdict">PASSED</span>
+            <span class="pr-lesson" id="prLesson"></span>
+          </div>
+          <div class="pr-stats">
+            <div class="mini-stat"><div class="label">WPM</div><div class="value mono" id="prWpm">—</div></div>
+            <div class="mini-stat"><div class="label">ACC</div><div class="value mono" id="prAcc">—</div></div>
+            <div class="mini-stat"><div class="label">CONS</div><div class="value mono" id="prCons">—</div></div>
+            <div class="mini-stat"><div class="label">BEST</div><div class="value mono" id="prBest">—</div></div>
+          </div>
+          <div class="pr-note" id="prNote"></div>
+          <div class="pr-actions">
+            <button class="btn primary" id="btnPNext">Next lesson ↵</button>
+            <button class="btn" id="btnPRetry">Retry <span class="kbd-inline">↵</span></button>
+            <button class="btn ghost" id="btnPExit2">← all lessons</button>
+          </div>
+        </div>
+        <div class="kb kb-holder" id="practiceKb"></div>
+        <div class="roadmap-wrap">
+          <div class="roadmap-label">Lesson roadmap</div>
+          <div class="roadmap" id="lessonRoadmap"></div>
+        </div>
+        <div class="bottom-hint"><kbd>Tab</kbd> restart lesson · follow the highlighted keys · mistakes only cost you accuracy</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= HISTORY ======================= -->
+  <section class="view" id="view-history">
+    <div class="h-cards" id="hCards"></div>
+    <div class="card h-table-card">
+      <table class="h-table">
+        <thead>
+          <tr><th>Date</th><th>Mode</th><th>WPM</th><th>Raw</th><th>Acc</th><th>Cons</th><th>Errors</th><th>Time</th></tr>
+        </thead>
+        <tbody id="hBody"></tbody>
+      </table>
+      <div class="h-empty" id="hEmpty">No tests yet — finish one in the Test tab and it will appear here.</div>
+      <div class="h-foot"><button class="btn ghost small" id="btnClearHistory">Clear history</button></div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <div>KeyFlow v1.4 — a calm, private typing lab. No accounts, no tracking, no internet needed.</div>
+  <div class="keys"><kbd>Tab</kbd> new <kbd>Esc</kbd> restart <kbd>↵</kbd> next</div>
+</footer>
+
+<div class="dialog-scan" id="settingsDialog">
+  <div class="dialog card">
+    <div class="dialog-head"><h3>Settings</h3><button class="icon-btn" id="btnSettingsClose" aria-label="Close">✕</button></div>
+    <div class="dialog-body">
+      <div class="set-row">
+        <span>Theme <em id="setThemeName">dark</em></span>
+        <select id="setTheme"><option value="dark">Dark</option><option value="light">Light</option></select>
+      </div>
+      <div class="set-row">
+        <span>Accent color</span>
+        <select id="setAccent">
+          <option value="teal">Teal (default)</option>
+          <option value="amber">Amber</option>
+          <option value="violet">Violet</option>
+          <option value="rose">Rose</option>
+          <option value="sky">Sky</option>
+        </select>
+      </div>
+      <div class="set-row">
+        <span>Sound effects</span>
+        <label class="switch"><input type="checkbox" id="setSound"><span></span></label>
+      </div>
+      <div class="set-row">
+        <span>Smooth caret</span>
+        <label class="switch"><input type="checkbox" id="setCaret"><span></span></label>
+      </div>
+      <div class="set-row">
+        <span>Show keyboard in test</span>
+        <label class="switch"><input type="checkbox" id="setKb"><span></span></label>
+      </div>
+      <div class="set-row">
+        <span>Next-word suggestions</span>
+        <label class="switch"><input type="checkbox" id="setSuggest"><span></span></label>
+      </div>
+      <div class="set-row">
+        <span>Caret style</span>
+        <select id="setCaretStyle"><option value="line">Line</option><option value="block">Block</option><option value="underline">Underline</option></select>
+      </div>
+      <div class="set-row">
+        <span>Text size <em id="setFontVal">30px</em></span>
+        <input type="range" id="setFontSize" min="22" max="42" step="1">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<div class="dialog-scan" id="helpDialog">
+  <div class="dialog card">
+    <div class="dialog-head"><h3>Help &amp; shortcuts</h3><button class="icon-btn" id="btnHelpClose" aria-label="Close">✕</button></div>
+    <div class="dialog-body help-body">
+      <div class="help-sec">
+        <h4>Shortcuts</h4>
+        <ul>
+          <li><kbd>Tab</kbd> — new test / restart lesson (fresh words)</li>
+          <li><kbd>Esc</kbd> — restart the same words / lesson</li>
+          <li><kbd>↵</kbd> — next test (on the results screen)</li>
+        </ul>
+      </div>
+      <div class="help-sec">
+        <h4>Modes</h4>
+        <ul>
+          <li><b>time</b> — type as long as the clock runs. Great for score graphs.</li>
+          <li><b>words</b> — a fixed set of words that ends automatically on the last word.</li>
+          <li><b>quote</b> — type a full quote with attribution.</li>
+          <li><b>custom</b> — paste your own text and practice on exactly that.</li>
+        </ul>
+      </div>
+      <div class="help-sec">
+        <h4>Difficulty</h4>
+        <ul>
+          <li><b>beginner</b> — the most common, shortest words — great for new typists.</li>
+          <li><b>easy</b> — everyday short words.</li>
+          <li><b>medium</b> — everyday but longer words.</li>
+          <li><b>hard</b> — advanced vocabulary.</li>
+          <li><b>expert</b> — rare, long, technical words. Brace yourself.</li>
+        </ul>
+      </div>
+      <div class="help-sec">
+        <h4>Typing aids</h4>
+        <ul>
+          <li><b>next-word suggestions</b> — the upcoming words appear under the text while you type; turn off in settings if you prefer a clean screen.</li>
+          <li><b>on-screen keyboard</b> — highlights exactly which key comes next, including Shift combos.</li>
+        </ul>
+      </div>
+      <div class="help-sec">
+        <h4>Scoring</h4>
+        <ul>
+          <li><b>WPM</b> — correct characters ÷ 5, scaled to one minute.</li>
+          <li><b>Raw</b> — every character you typed (incl. mistakes).</li>
+          <li><b>Accuracy</b> — correct ÷ all typed characters.</li>
+          <li><b>Consistency</b> — how steady your pace was across seconds.</li>
+        </ul>
+      </div>
+      <div class="help-sec">
+        <h4>Tips</h4>
+        <ul>
+          <li>Keep wrists up and fingers anchored on the home row.</li>
+          <li>Accuracy first: at 95%+ accuracy, speed follows almost free.</li>
+          <li>Finish a run before correcting — count on the backspace sparingly.</li>
+          <li>Use the <b>Practice</b> tab until each row is automatic.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-scan" id="customDialog">
+  <div class="dialog card">
+    <div class="dialog-head"><h3>Custom text</h3><button class="icon-btn" id="btnCustomClose" aria-label="Close">✕</button></div>
+    <div class="dialog-body">
+      <p class="ct-hint">Paste any text — a paragraph, code snippet, homework — and practice on exactly that. The test ends when you finish it.</p>
+      <textarea class="ct-textarea" id="customText" placeholder="Paste your text here… (anything you like)"></textarea>
+      <div class="ct-meta">
+        <span class="ct-count" id="customCount">0 words</span>
+        <div class="ct-actions">
+          <button class="btn ghost small" id="btnCustomClear">Clear</button>
+          <button class="btn primary small" id="btnCustomStart">Start test ↵</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<noscript><div class="noscript">KeyFlow needs JavaScript to run. Please enable it.</div></noscript>
+
+<script src="js/words.js?v=8"></script>
+<script src="js/keyboard.js?v=8"></script>
+<script src="js/chart.js?v=8"></script>
+<script src="js/main.js?v=8"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "name": "full-stack-app",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix typeio run dev"
+  }
+}
